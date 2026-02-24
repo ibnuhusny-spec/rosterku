@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION: 3.0 (TES WARNA KUNING EKSTREM) -->
+<!-- VERSION: 4.0 (BERSIH & FINAL DENGAN PENGATURAN) -->
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -7,8 +7,7 @@
     <title>Kelola Data Master - Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<!-- MENGUBAH BACKGROUND JADI KUNING AGAR TERLIHAT JELAS PERUBAHANNYA -->
-<body class="bg-yellow-100 min-h-screen p-4 md:p-8 font-sans text-gray-800">
+<body class="bg-gray-100 min-h-screen p-4 md:p-8 font-sans text-gray-800">
 
     <!-- Navigasi -->
     <div class="max-w-5xl mx-auto mb-4">
@@ -17,14 +16,13 @@
         </a>
     </div>
 
-    <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6 md:p-8 border-4 border-red-500">
-        <!-- JUDUL DIBUAT SANGAT MENCOLOK -->
-        <h2 class="text-3xl font-extrabold text-center text-red-600 mb-2">KELOLA DATA MASTER (VERSI BARU!)</h2>
-        <p class="text-center text-gray-500 mb-8 text-sm bg-yellow-200 p-2 rounded">Jika Anda melihat kotak merah dan tulisan ini, berarti Vercel SUDAH BERHASIL UPDATE!</p>
+    <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6 md:p-8">
+        <h2 class="text-2xl font-bold text-center text-indigo-600 mb-2">Kelola Data Master</h2>
+        <p class="text-center text-gray-500 mb-8 text-sm">Tambahkan data Guru, Kelas, Mapel, dan Jam di sini. Data ini akan otomatis muncul di pilihan form jadwal.</p>
 
         <!-- PENGATURAN SEKOLAH (BARU) -->
-        <div class="bg-blue-50 border-2 border-blue-400 p-5 rounded-lg shadow-sm mb-8">
-            <h3 class="font-bold text-xl text-blue-800 mb-3 flex items-center">⚙️ Pengaturan Splash Screen</h3>
+        <div class="bg-blue-50 border border-blue-200 p-5 rounded-lg shadow-sm mb-8">
+            <h3 class="font-bold text-lg text-blue-800 mb-3 flex items-center">⚙️ Pengaturan Splash Screen</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-semibold mb-1">Nama Sekolah</label>
@@ -109,7 +107,7 @@
         import { getFirestore, collection, addDoc, onSnapshot, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
         // ========================================================
-        // ⚠️ MASUKKAN FIREBASE CONFIG ANDA DI SINI
+        // ⚠️ PENTING: JANGAN LUPA MASUKKAN FIREBASE CONFIG ANDA
         // ========================================================
         const firebaseConfig = {
              apiKey: "AIzaSyAu8st2VRsNFyzC8UR8TDq8821y4_TVHVk",
@@ -228,7 +226,7 @@
                     logo_url: inputLogoSekolah.value.trim()
                 });
                 pesanPengaturan.classList.remove('hidden');
-                setTimeout(() => pesanPengaturan.classList.add('hidden'), 3000);
+                setTimeout(() => pesanPengaturan.classList.add('hidden'), 3000); // Hilangkan pesan setelah 3 detik
             } catch (error) {
                 console.warn("Gagal simpan pengaturan:", error);
                 alert("Gagal menyimpan pengaturan! Pastikan Anda terhubung ke internet.");

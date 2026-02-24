@@ -18,6 +18,7 @@
         </a>
     </div>
 
+    <!-- Form Input Jadwal -->
     <div class="max-w-lg mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6 md:p-8">
         <h2 class="text-2xl font-bold text-center text-blue-600 mb-6">Susun Jadwal Pelajaran (Admin)</h2>
         
@@ -38,7 +39,6 @@
                 </select>
             </div>
 
-            <!-- Ditarik dari Firebase -->
             <div>
                 <label class="block text-sm font-semibold mb-1">Jam Ke-</label>
                 <select id="jam_ke" required class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -73,10 +73,32 @@
         </form>
     </div>
 
-    <!-- Script Firebase versi Modular (v11) -->
+    <!-- TABEL DAFTAR JADWAL UNTUK DIHAPUS (HANYA ADMIN) -->
+    <div class="max-w-4xl mx-auto mt-8 mb-10 bg-white rounded-xl shadow-md overflow-hidden p-6 md:p-8">
+        <h2 class="text-xl font-bold text-gray-700 mb-4 border-b pb-2">Daftar Jadwal Tersimpan</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white text-sm">
+                <thead class="bg-gray-100 text-gray-600">
+                    <tr>
+                        <th class="py-2 px-4 text-left font-semibold">Hari</th>
+                        <th class="py-2 px-4 text-left font-semibold">Jam</th>
+                        <th class="py-2 px-4 text-left font-semibold">Kelas</th>
+                        <th class="py-2 px-4 text-left font-semibold">Mapel</th>
+                        <th class="py-2 px-4 text-left font-semibold">Guru</th>
+                        <th class="py-2 px-4 text-center font-semibold">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelAdminJadwal" class="divide-y divide-gray-200">
+                    <tr><td colspan="6" class="py-4 text-center text-gray-500">Memuat data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Script Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
         // ========================================================
         // ⚠️ MASUKKAN FIREBASE CONFIG ANDA DI SINI
@@ -93,6 +115,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // --- FUNGSI MUAT DROPDOWN MASTER DATA ---
         function muatDropdownMaster(koleksi, idDropdown, teksDefault) {
             const elemen = document.getElementById(idDropdown);
             if (firebaseConfig.apiKey === "API_KEY_ANDA") {
@@ -113,15 +136,78 @@
         muatDropdownMaster("master_mapel", "mapel", "Pilih Mapel");
         muatDropdownMaster("master_guru", "guru", "Pilih Guru");
 
-        const form = document.getElementById('formJadwal');
-        const btnSubmit = document.getElementById('btnSubmit');
+        // --- FUNGSI TAMPIL PESAN ---
         const pesanBox = document.getElementById('pesanBox');
-
         function tampilkanPesan(pesan, tipe) {
             pesanBox.innerHTML = pesan;
             pesanBox.className = `p-4 mb-6 rounded-lg font-medium text-sm block ${tipe === 'sukses' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
             pesanBox.classList.remove('hidden');
         }
+
+        // --- FUNGSI TAMPIL & HAPUS JADWAL DI TABEL BAWAH ---
+        const tabelAdminJadwal = document.getElementById('tabelAdminJadwal');
+
+        function muatTabelJadwal() {
+            if (firebaseConfig.apiKey === "API_KEY_ANDA") {
+                 tabelAdminJadwal.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-red-500 font-medium">Firebase belum dikonfigurasi.</td></tr>`;
+                 return;
+            }
+            
+            onSnapshot(collection(db, "jadwal_pelajaran"), (snapshot) => {
+                tabelAdminJadwal.innerHTML = "";
+                if (snapshot.empty) {
+                    tabelAdminJadwal.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-gray-500 italic">Belum ada jadwal tersimpan.</td></tr>`;
+                    return;
+                }
+
+                // Masukkan data ke array untuk disorting (opsional, agar rapi)
+                let jadwalArr = [];
+                snapshot.forEach(docSnap => {
+                    jadwalArr.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                // Urutkan berdasarkan hari (sederhana) dan jam
+                jadwalArr.sort((a, b) => {
+                     return a.hari.localeCompare(b.hari) || a.jam_ke.localeCompare(b.jam_ke);
+                });
+
+                jadwalArr.forEach(jadwal => {
+                    tabelAdminJadwal.insertAdjacentHTML('beforeend', `
+                        <tr class="hover:bg-gray-50 transition border-b border-gray-100">
+                            <td class="py-3 px-4 text-gray-700">${jadwal.hari}</td>
+                            <td class="py-3 px-4 text-gray-700">${jadwal.jam_ke}</td>
+                            <td class="py-3 px-4 font-bold text-indigo-700">${jadwal.kelas}</td>
+                            <td class="py-3 px-4 text-gray-700">${jadwal.mapel}</td>
+                            <td class="py-3 px-4 text-gray-700">${jadwal.guru}</td>
+                            <td class="py-3 px-4 text-center">
+                                <button onclick="hapusJadwal('${jadwal.id}')" class="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-1 px-3 rounded shadow-sm transition">
+                                    Hapus
+                                </button>
+                            </td>
+                        </tr>
+                    `);
+                });
+            });
+        }
+
+        // Jadikan fungsi hapus global agar bisa dipanggil dari atribut onclick di HTML
+        window.hapusJadwal = async function(idDokumen) {
+            if(confirm("Apakah Anda yakin ingin menghapus jadwal ini?")) {
+                try {
+                    await deleteDoc(doc(db, "jadwal_pelajaran", idDokumen));
+                    // Tidak perlu tampilkanPesan sukses, karena onSnapshot akan merender ulang tabel secara otomatis
+                } catch(e) {
+                    console.error("Gagal menghapus:", e);
+                    alert("Gagal menghapus jadwal. Periksa koneksi internet.");
+                }
+            }
+        };
+
+        muatTabelJadwal();
+
+        // --- FUNGSI SIMPAN JADWAL BARU ---
+        const form = document.getElementById('formJadwal');
+        const btnSubmit = document.getElementById('btnSubmit');
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -144,6 +230,7 @@
             try {
                 const jadwalRef = collection(db, "jadwal_pelajaran");
 
+                // Cek bentrok Guru
                 const qGuru = query(jadwalRef, where("hari", "==", hari), where("jam_ke", "==", jam_ke), where("guru", "==", guru));
                 const snapshotGuru = await getDocs(qGuru);
                 if (!snapshotGuru.empty) {
@@ -153,6 +240,7 @@
                     return;
                 }
 
+                // Cek bentrok Kelas
                 const qKelas = query(jadwalRef, where("hari", "==", hari), where("jam_ke", "==", jam_ke), where("kelas", "==", kelas));
                 const snapshotKelas = await getDocs(qKelas);
                 if (!snapshotKelas.empty) {
@@ -162,6 +250,7 @@
                     return;
                 }
 
+                // Jika lolos cek, simpan data
                 await addDoc(jadwalRef, { hari, jam_ke, kelas, mapel, guru, dibuat_pada: new Date() });
                 tampilkanPesan("✅ <b>Sukses!</b> Jadwal berhasil disimpan.", 'sukses');
                 form.reset();
